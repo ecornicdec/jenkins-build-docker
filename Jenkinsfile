@@ -1,19 +1,28 @@
-node{
-  def app
+node {
+
+   def registryProjet='formation/'
+   def IMAGE="${registryProjet}app:3.5"
 
     stage('Clone') {
-        checkout scm
+          checkout scm
     }
 
-    stage('Build image') {
-        app = docker.build("srv-web")
+    def img = stage('Build') {
+          docker.build("$IMAGE",  '.')
     }
 
-    stage('Run image') {
-        docker.image('srv-web').withRun('-p 800:80 --name srv_web' ) { c ->
-
-        sh 'docker ps | grep srv_web'
-      }
-
+    stage('Run') {
+          img.withRun("--name run-$BUILD_ID -p 8000:80") { c ->
+       
+          }
     }
+
+    stage('Push') {
+          docker.withRegistry('https://registry.ludovic.tech', 'harbor_id') {
+              img.push 'latest'
+              img.push()
+          }
+    }
+
 }
+
